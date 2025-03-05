@@ -52,6 +52,16 @@ try:
     botao_enviar.click()
     print("Botão 'Enviar' clicado com sucesso.")
     
+    # Aguarda e preenche o campo CPF
+    campo_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
+    campo_cpf.send_keys("539.232.908-02")
+    print("CPF inserido com sucesso.")
+    
+    # Aguarda e clica no botão "Entrar"
+    botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
+    botao_entrar.click()
+    print("Botão 'Entrar' clicado com sucesso.")
+    
     time.sleep(60)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
