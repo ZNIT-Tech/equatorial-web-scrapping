@@ -42,6 +42,16 @@ try:
     botao_continuar.click()
     print("Botão 'Continuar no site' clicado com sucesso.")
     
+    # Aguarda e marca o checkbox "aviso_aceite"
+    checkbox_aviso = wait.until(EC.element_to_be_clickable((By.ID, "aviso_aceite")))
+    checkbox_aviso.click()
+    print("Checkbox 'aviso_aceite' marcado com sucesso.")
+    
+    # Aguarda e clica no botão "Enviar"
+    botao_enviar = wait.until(EC.element_to_be_clickable((By.ID, "lgpd_accept")))
+    botao_enviar.click()
+    print("Botão 'Enviar' clicado com sucesso.")
+    
     time.sleep(60)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
