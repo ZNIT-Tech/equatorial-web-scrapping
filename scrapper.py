@@ -54,11 +54,20 @@ try:
     
     # Aguarda e preenche o campo CPF
     campo_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
-    campo_cpf.send_keys("539.232.908-02")
+    campo_cpf.send_keys("740.116.423-04")
     print("CPF inserido com sucesso.")
     
     # Aguarda e clica no botão "Entrar"
     botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
+    botao_entrar.click()
+    print("Botão 'Entrar' clicado com sucesso.")
+    
+    # Aguarda e preenche o campo de senha
+    campo_senha = wait.until(EC.element_to_be_clickable((By.ID, "senha-identificador")))
+    campo_senha.send_keys("05 06 1976")
+    print("Senha inserida com sucesso.")
+
+    botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador")))
     botao_entrar.click()
     print("Botão 'Entrar' clicado com sucesso.")
     
