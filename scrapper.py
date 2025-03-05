@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
@@ -52,10 +53,21 @@ try:
     botao_enviar.click()
     print("Botão 'Enviar' clicado com sucesso.")
     
-    # Aguarda e preenche o campo CPF
+    # Aguarda e preenche o campo CPF/CNPJ caractere por caractere
+    # Aguarda e preenche o campo CPF/CNPJ caractere por caractere
     campo_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
-    campo_cpf.send_keys("740.116.423-04")
-    print("CPF inserido com sucesso.")
+    cnpj = "06.626.253/0091-08"
+
+    for char in cnpj:
+        campo_cpf.send_keys(char)
+        time.sleep(0.1)  # Pequeno delay para evitar falhas de digitação
+
+    print("CNPJ inserido com sucesso caractere por caractere.")
+
+    # Pressiona a seta para a esquerda uma vez
+    campo_cpf.send_keys(Keys.ARROW_LEFT)
+    print("Seta para a esquerda pressionada.")
+
     
     # Aguarda e clica no botão "Entrar"
     botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
@@ -64,12 +76,18 @@ try:
     
     # Aguarda e preenche o campo de senha
     campo_senha = wait.until(EC.element_to_be_clickable((By.ID, "senha-identificador")))
-    campo_senha.send_keys("05 06 1976")
+    campo_senha.send_keys("paguemenos.ubm@enel.com")
     print("Senha inserida com sucesso.")
+
+    time.sleep(10)  # Espera para observar o resultado
 
     botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador")))
     botao_entrar.click()
     print("Botão 'Entrar' clicado com sucesso.")
+
+    time.sleep(15)  # Espera para observar o resultado
+
+    driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
     
     time.sleep(60)  # Espera para observar o resultado
 except Exception as e:
