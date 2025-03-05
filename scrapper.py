@@ -37,6 +37,11 @@ try:
     botao_cookies.click()
     print("Botão de cookies clicado com sucesso.")
     
+    # Aguarda e clica no botão "Continuar no site"
+    botao_continuar = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continuar no site')]")))
+    botao_continuar.click()
+    print("Botão 'Continuar no site' clicado com sucesso.")
+    
     time.sleep(60)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
