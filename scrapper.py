@@ -88,8 +88,23 @@ try:
     time.sleep(15)  # Espera para observar o resultado
 
     driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
+
+    try:
+    # Espera até que o <tr> da fatura esteja presente na página
+        fatura = wait.until(EC.presence_of_element_located(
+            (By.XPATH, "//tr[@data-bill-value='R$ 706,11' and @data-numero-fatura='300032524124']")
+        ))
+
+        # Aqui você pode clicar no botão que está dentro do <tr>
+        # Modifique esse XPath para localizar o botão correto
+        botao_fatura = fatura.find_element(By.XPATH, ".//button[contains(text(), 'Pagar')]")
+        botao_fatura.click()
+        print("Botão da fatura clicado com sucesso.")
     
-    time.sleep(60)  # Espera para observar o resultado
+    except Exception as e:
+        print(f"Erro ao interagir com os elementos: {e}")
+    
+    time.sleep(900)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
 
