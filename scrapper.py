@@ -10,7 +10,7 @@ import time
 
 # Configurações do Selenium
 options = Options()
-#options.add_argument("--headless")  # Executa sem abrir a janela do navegador
+# options.add_argument("--headless")  # Executa sem abrir a janela do navegador
 options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
@@ -30,13 +30,16 @@ try:
     wait = WebDriverWait(driver, 10)
     botao_piaui = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'PIAUÍ')]")))
     botao_piaui.click()
-    time.sleep(60)  # Espera 5 segundos
+    print("Botão do Piauí clicado com sucesso.")
+    
+    # Aguarda e clica no botão de aceitar cookies
+    botao_cookies = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
+    botao_cookies.click()
+    print("Botão de cookies clicado com sucesso.")
+    
+    time.sleep(60)  # Espera para observar o resultado
 except Exception as e:
-    print(f"Erro ao clicar no botão: {e}")
+    print(f"Erro ao interagir com os elementos: {e}")
 
 # Fecha o navegador
 driver.quit()
-
-# Requirements
-# Instale as dependências necessárias com o comando:
-# pip install selenium webdriver-manager
