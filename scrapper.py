@@ -103,7 +103,30 @@ try:
     
     except Exception as e:
         print(f"Erro ao interagir com os elementos: {e}")
-    
+
+    try:
+        # Aguarda até que o elemento <tr> esteja clicável.
+        wait = WebDriverWait(driver, 10)
+        tr_element = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//tr[contains(@data-bill-value, '706,11') and @data-numero-fatura='300032524124']")
+        ))
+        
+        # Clica no elemento <tr>
+        tr_element.click()
+        print("Elemento <tr> clicado com sucesso!")
+        
+    except Exception as e:
+        print("Erro ao clicar no elemento:", e)
+
+    try:
+        wait = WebDriverWait(driver, 20)
+        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Ver Fatura')]")))
+        botao_ver_fatura.click()
+        print("Botão 'Ver Fatura' clicado com sucesso.")
+    except Exception as e:
+        print(f"Erro ao clicar no botão 'Ver Fatura': {e}")
+
+
     time.sleep(900)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
