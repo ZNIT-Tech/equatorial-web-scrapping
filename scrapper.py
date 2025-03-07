@@ -119,8 +119,8 @@ try:
         print("Erro ao clicar no elemento:", e)
 
     try:
-        wait = WebDriverWait(driver, 20)
-        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Ver Fatura')]")))
+        wait = WebDriverWait(driver, 40)
+        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
         botao_ver_fatura.click()
         print("Botão 'Ver Fatura' clicado com sucesso.")
     except Exception as e:
