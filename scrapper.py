@@ -8,13 +8,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+import os
 
 # Configurações do Selenium
 options = Options()
-# options.add_argument("--headless")  # Executa sem abrir a janela do navegador
 options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
+options.add_experimental_option("prefs", {
+    "download.default_directory": "/home/enzo/repositories/equatorial-web-scrapping/download",  # Defina o diretório de download
+    "download.prompt_for_download": False,  # Impede a janela de confirmação de download
+    "plugins.always_open_pdf_externally": True  # Impede que o PDF seja aberto no navegador
+})
 
 # Inicializa o WebDriver
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -54,7 +59,6 @@ try:
     print("Botão 'Enviar' clicado com sucesso.")
     
     # Aguarda e preenche o campo CPF/CNPJ caractere por caractere
-    # Aguarda e preenche o campo CPF/CNPJ caractere por caractere
     campo_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
     cnpj = "06.626.253/0091-08"
 
@@ -90,7 +94,7 @@ try:
     driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
 
     try:
-    # Espera até que o <tr> da fatura esteja presente na página
+        # Espera até que o <tr> da fatura esteja presente na página
         fatura = wait.until(EC.presence_of_element_located(
             (By.XPATH, "//tr[@data-bill-value='R$ 706,11' and @data-numero-fatura='300032524124']")
         ))
@@ -126,8 +130,8 @@ try:
     except Exception as e:
         print(f"Erro ao clicar no botão 'Ver Fatura': {e}")
 
+    time.sleep(10)  # Espera para observar o resultado
 
-    time.sleep(900)  # Espera para observar o resultado
 except Exception as e:
     print(f"Erro ao interagir com os elementos: {e}")
 
