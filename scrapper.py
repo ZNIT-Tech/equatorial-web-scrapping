@@ -7,12 +7,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+import os
 
 # Configurações do Selenium
 options = Options()
 options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
+options.add_experimental_option("prefs", {
+    "download.default_directory": "/home/enzo/repositories/equatorial-web-scrapping/download",  # Defina o diretório de download
+    "download.prompt_for_download": False,  # Impede a janela de confirmação de download
+    "plugins.always_open_pdf_externally": True  # Impede que o PDF seja aberto no navegador
+})
 
 # Inicializa o WebDriver
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -110,24 +116,44 @@ try:
         driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
         print("Página de faturas carregada.")
 
-        # Aguarda carregar as faturas
-        wait.until(EC.presence_of_element_located((By.XPATH, "//tr[contains(@data-numero-fatura, '')]")))
+    try:
+        # Espera até que o <tr> da fatura esteja presente na página
+        fatura = wait.until(EC.presence_of_element_located(
+            (By.XPATH, "//tr[@data-bill-value='R$ 706,11' and @data-numero-fatura='300032524124']")
+        ))
 
-        # Coleta as cinco últimas faturas disponíveis
-        faturas = driver.find_elements(By.XPATH, "//tr[contains(@data-numero-fatura, '')]")[:5]
+        # Aqui você pode clicar no botão que está dentro do <tr>
+        # Modifique esse XPath para localizar o botão correto
+        botao_fatura = fatura.find_element(By.XPATH, ".//button[contains(text(), 'Pagar')]")
+        botao_fatura.click()
+        print("Botão da fatura clicado com sucesso.")
+    
+    except Exception as e:
+        print(f"Erro ao interagir com os elementos: {e}")
 
-        for i, fatura in enumerate(faturas):
-            try:
-                botao_ver_fatura = fatura.find_element(By.XPATH, ".//a[contains(text(), 'Ver Fatura')]")
-                botao_ver_fatura.click()
-                print(f"Fatura {i+1} selecionada.")
+    try:
+        # Aguarda até que o elemento <tr> esteja clicável.
+        wait = WebDriverWait(driver, 10)
+        tr_element = wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//tr[contains(@data-bill-value, '706,11') and @data-numero-fatura='300032524124']")
+        ))
+        
+        # Clica no elemento <tr>
+        tr_element.click()
+        print("Elemento <tr> clicado com sucesso!")
+        
+    except Exception as e:
+        print("Erro ao clicar no elemento:", e)
 
-                time.sleep(5)
+    try:
+        wait = WebDriverWait(driver, 40)
+        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
+        botao_ver_fatura.click()
+        print("Botão 'Ver Fatura' clicado com sucesso.")
+    except Exception as e:
+        print(f"Erro ao clicar no botão 'Ver Fatura': {e}")
 
-            except Exception as e:
-                print(f"Erro ao baixar fatura {i+1}: {e}")
-
-        print("Download das 5 últimas faturas concluído.")
+    time.sleep(10)  # Espera para observar o resultado
 
 except Exception as e:
     print(f"Erro geral: {e}")
