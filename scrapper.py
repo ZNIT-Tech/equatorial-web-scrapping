@@ -9,14 +9,17 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 from datetime import datetime, timedelta
 import os
+import tempfile
+
 
 # Configurações do Selenium
 options = Options()
+options.add_argument("--headless=new")
 options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_experimental_option("prefs", {
-    "download.default_directory": "/home/enzo/repositories/equatorial-web-scrapping/download",  # Defina o diretório de download
+    "download.default_directory": "/app/download",  # Defina o diretório de download no contêiner
     "download.prompt_for_download": False,  # Impede a janela de confirmação de download
     "plugins.always_open_pdf_externally": True  # Impede que o PDF seja aberto no navegador
 })
@@ -46,8 +49,8 @@ try:
     print("Página carregada.")
 
     # Clica no estado Piauí
-    botao_piaui = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'PIAUÍ')]")))
-    botao_piaui.click()
+    botao_estado = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'PIAUÍ')]")))
+    botao_estado.click()
     print("Acessando Equatorial Piauí.")
 
     # Aceita os cookies
@@ -80,18 +83,18 @@ try:
         print(f"Tentativa de login #{tentativas}...")
 
         # Preenche o campo de CNPJ
-        campo_cnpj = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
-        campo_cnpj.clear()
-        cnpj = "06.626.253/0091-08"
+        campo_cnpj_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
+        campo_cnpj_cpf.clear()
+        cnpj_cpf = "06.626.253/0091-08"
 
-        for char in cnpj:
-            campo_cnpj.send_keys(char)
+        for char in cnpj_cpf:
+            campo_cnpj_cpf.send_keys(char)
             time.sleep(0.1)
 
         print("CNPJ inserido.")
 
         # Pressiona seta para a esquerda
-        campo_cnpj.send_keys(Keys.ARROW_LEFT)
+        campo_cnpj_cpf.send_keys(Keys.ARROW_LEFT)
 
         # Clica no botão "Entrar"
         botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
@@ -162,7 +165,7 @@ try:
                         print("Elemento <tr> clicado com sucesso!")
 
                         # Encontra o botão de download dentro da linha da fatura
-                        wait = WebDriverWait(driver, 40)
+                        wait = WebDriverWait(driver, 120)
                         botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
                         botao_ver_fatura.click()
 

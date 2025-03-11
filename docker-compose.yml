@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  selenium-script:
+    build: .
+    container_name: selenium_scraper
+    environment:
+      - DISPLAY=:99
+    volumes:
+      - ./download:/app/download  # Ajuste o caminho conforme necessário
+    restart: unless-stopped
