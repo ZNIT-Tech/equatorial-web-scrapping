@@ -12,9 +12,13 @@ import os
 import tempfile
 
 
+ESTADO = "PIAUÍ"
+CNPJ_CPF = "06.626.253/0091-08"
+SENHA = "paguemenos.ubm@enel.com"
+
 # Configurações do Selenium
 options = Options()
-options.add_argument("--headless=new")
+#options.add_argument("--headless=new")
 options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
@@ -49,7 +53,7 @@ try:
     print("Página carregada.")
 
     # Clica no estado Piauí
-    botao_estado = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'PIAUÍ')]")))
+    botao_estado = wait.until(EC.element_to_be_clickable((By.XPATH, f"//a[contains(text(), '{ESTADO}')]")))
     botao_estado.click()
     print("Acessando Equatorial Piauí.")
 
@@ -85,7 +89,7 @@ try:
         # Preenche o campo de CNPJ
         campo_cnpj_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
         campo_cnpj_cpf.clear()
-        cnpj_cpf = "06.626.253/0091-08"
+        cnpj_cpf = CNPJ_CPF.replace(".", "").replace("/", "").replace("-", "")
 
         for char in cnpj_cpf:
             campo_cnpj_cpf.send_keys(char)
@@ -103,7 +107,7 @@ try:
 
         # Preenche o campo de senha
         campo_senha = wait.until(EC.element_to_be_clickable((By.ID, "senha-identificador")))
-        campo_senha.send_keys("paguemenos.ubm@enel.com")
+        campo_senha.send_keys(f"{SENHA}")
         print("Senha inserida.")
 
         # Clica novamente em "Entrar"
