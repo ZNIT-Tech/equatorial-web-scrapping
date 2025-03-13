@@ -11,10 +11,11 @@ from datetime import datetime, timedelta
 import os
 import tempfile
 
-DOWLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
+DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
 
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()
+    #options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -89,11 +90,13 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
             botao_entrar.click()
             print("Primeiro botão 'Entrar' clicado.")
-
+            
+            time.sleep(10)
             campo_senha = wait.until(EC.element_to_be_clickable((By.ID, "senha-identificador")))
             campo_senha.send_keys(f"{senha}")
             print("Senha inserida.")
 
+            time.sleep(10)
             botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador")))
             botao_entrar.click()
             print("Segundo botão 'Entrar' clicado.")
@@ -115,6 +118,7 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             print("Falha no login após várias tentativas. Verifique as credenciais.")
 
         else:
+            time.sleep(1)
             driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
             print("Página de faturas carregada.")
 
