@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  selenium-script:
+  web:
     build: .
-    container_name: selenium_scraper
-    environment:
-      - DISPLAY=:99
+    ports:
+      - "5000:5000"
     volumes:
-      - ./download:/app/download  # Ajuste o caminho conforme necessário
-    restart: unless-stopped
+      - ./download:/app/download  # Persistência dos arquivos baixados
+    environment:
+      - PYTHONUNBUFFERED=1

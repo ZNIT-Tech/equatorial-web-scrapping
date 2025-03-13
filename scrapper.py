@@ -15,7 +15,7 @@ DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-
 
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()
-    #options.add_argument("--headless")
+    options.add_argument("--headless=new")  # Novo modo headless que permite downloads
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
