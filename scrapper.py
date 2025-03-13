@@ -20,7 +20,7 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_experimental_option("prefs", {
-    "download.default_directory": DOWLOAD_DIR,  # Caminho onde os arquivos serão baixados
+    "download.default_directory": DOWNLOAD_DIR,  # Caminho onde os arquivos serão baixados
     "download.prompt_for_download": False,  # Impede a janela de confirmação
     "plugins.always_open_pdf_externally": True,  # Impede que o PDF seja aberto no navegador
     "safebrowsing.enabled": True,  # Habilita o download seguro
