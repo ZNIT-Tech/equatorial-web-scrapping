@@ -16,7 +16,7 @@ DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
-    #options.add_argument("--headless=new")  # Novo modo headless que permite downloads
+    options.add_argument("--headless=new")  # Novo modo headless que permite downloads
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -27,6 +27,10 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     "safebrowsing.enabled": True,  # Habilita o download seguro
     "download.directory_upgrade": True,  # Força o Chrome a usar o diretório especificado
     })
+
+    # Create a temporary directory for the user data to avoid conflicts
+    user_data_dir = tempfile.mkdtemp()
+    options.add_argument(f"--user-data-dir={user_data_dir}")
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     wait = WebDriverWait(driver, 15)
