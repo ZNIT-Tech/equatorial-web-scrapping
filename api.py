@@ -52,5 +52,9 @@ def scrape():
 
     return send_file(zip_path, as_attachment=True, download_name="faturas.zip")
 
+@app.route("/check", methods=["GET"])
+def check():
+    return jsonify({"status": "OK"})
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
