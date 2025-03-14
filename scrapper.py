@@ -21,13 +21,6 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
-    # Exemplo de uso do diretório:
-    file_path = os.path.join(DOWNLOAD_DIR, "arquivo_baixado.pdf")
-    with open(file_path, "wb") as f:
-        f.write(b"Dados simulados")  # Exemplo de escrita de arquivo
-
-
-def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
     options.add_argument("--headless=new")  # Novo modo headless que permite downloads
