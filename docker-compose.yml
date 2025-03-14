@@ -9,3 +9,5 @@ services:
       - ./download:/app/download  # Persistência dos arquivos baixados
     environment:
       - PYTHONUNBUFFERED=1
+      - DOWNLOAD_DIR=/app/download  # Define o diretório de download no container
+    restart: always  # Garante que o container reinicie automaticamente em caso de falha

@@ -11,7 +11,21 @@ from datetime import datetime, timedelta
 import os
 import tempfile
 
-DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
+import os
+
+# Define um diretório dentro do container
+DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")  # Usa variável de ambiente ou default
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+# Garante que o diretório existe
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
+    # Exemplo de uso do diretório:
+    file_path = os.path.join(DOWNLOAD_DIR, "arquivo_baixado.pdf")
+    with open(file_path, "wb") as f:
+        f.write(b"Dados simulados")  # Exemplo de escrita de arquivo
+
 
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()

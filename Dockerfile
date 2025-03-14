@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y wget curl unzip \
 && apt-get install -y /tmp/chrome.deb \
 && rm /tmp/chrome.deb
 
+ENV DOWNLOAD_DIR=/app/download
 
 # Define diretório de trabalho
 WORKDIR /app

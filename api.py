@@ -3,7 +3,8 @@ import zipfile
 from flask import Flask, request, jsonify, send_file
 from scrapper import scrape_data
 
-DOWLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
+DOWLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")
+os.makedirs(DOWLOAD_DIR, exist_ok=True)
 
 # Função para criar o arquivo ZIP
 def criar_zip_com_pdfs(diretorio_download, arquivos_pdf):
