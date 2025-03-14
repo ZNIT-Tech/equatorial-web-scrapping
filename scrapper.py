@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 from datetime import datetime, timedelta
@@ -134,7 +135,12 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
             print("Página de faturas carregada.")
 
-            wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
+            try:
+                wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
+            except TimeoutException:
+                print("Tabela de faturas não encontrada dentro do tempo limite.")
+                return
+
 
             faturas = driver.find_elements(By.XPATH, "//table//tr[@data-numero-fatura]")
 
