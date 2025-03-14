@@ -135,7 +135,7 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
             print("Página de faturas carregada.")
             
-            time.sleep(10)
+            time.sleep(100)
             try:
                 wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
             except TimeoutException:
