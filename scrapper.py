@@ -124,8 +124,17 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
                 time.sleep(5)
 
             except:
-                print("Login bem-sucedido!")
-                login_sucesso = True  # Sai do loop
+                print("Sem erros")
+
+            try:
+                # Aguarda a mudança da URL
+                wait.until(EC.url_contains("/sua-conta/"))
+                print("Login bem sucedido!")
+                login_sucesso = True  # Sai do loop se a URL for a esperada
+            except:
+                print("Login não bem sucedido, tentando novamente...")
+                driver.refresh()
+                time.sleep(5)  # Espera antes de tentar novamente
 
         if not login_sucesso:
             print("Falha no login após várias tentativas. Verifique as credenciais.")
