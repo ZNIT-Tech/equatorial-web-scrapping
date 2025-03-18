@@ -134,6 +134,10 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             time.sleep(1)
             driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
             print("Página de faturas carregada.")
+
+            time.sleep(10)
+            driver.refresh()
+            print("Página recarregada.")
             
             time.sleep(100)
             try:
