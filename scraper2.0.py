@@ -79,7 +79,6 @@ def acessar_faturas(driver):
         driver.refresh()
         print("Página recarregada.")
         
-        time.sleep(100)
         wait = WebDriverWait(driver, 120)
 
         # Fechar o banner de consentimento se estiver visível
