@@ -80,7 +80,7 @@ def acessar_faturas(driver):
         driver.refresh()
         print("Página recarregada.")
         
-        wait = WebDriverWait(driver, 120)
+        wait = WebDriverWait(driver, 20)
 
         # Fechar o banner de consentimento se estiver visível
         try:
@@ -102,36 +102,43 @@ def acessar_faturas(driver):
             print("Nenhuma fatura encontrada.")
         else:
             print(f"Encontradas {len(faturas)} faturas.")
-            
-            contagem = 0
 
+            # Criando uma lista ordenada dos meses disponíveis
+            faturas_disponiveis = []
             for fatura in faturas:
                 try:
                     mes_ano_fatura = fatura.find_element(By.XPATH, ".//span[@class='referencia_legada']").text.strip()
-                    print(mes_ano_fatura)
+                    faturas_disponiveis.append((mes_ano_fatura, fatura))
+                except:
+                    continue
 
-                    if mes_ano_fatura in meses_aceitos:
-                        print(f"Baixando fatura de {mes_ano_fatura}...")
-                        tr_element = wait.until(EC.element_to_be_clickable(
-                                    (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
-                                ))
-                                
-                        tr_element.click()
-                        print("Elemento <tr> clicado com sucesso!")
+            # Ordenar as faturas do mais recente para o mais antigo
+            faturas_disponiveis.sort(key=lambda x: datetime.strptime(x[0], "%m/%Y"), reverse=True)
 
-                        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
-                        botao_ver_fatura.click()
+            contagem = 0
+            for mes_ano_fatura, fatura in faturas_disponiveis:
+                try:
+                    print(f"Baixando fatura de {mes_ano_fatura}...")
 
-                        print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
-                        time.sleep(3)
+                    tr_element = wait.until(EC.element_to_be_clickable(
+                        (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
+                    ))
+                    tr_element.click()
+                    print("Elemento <tr> clicado com sucesso!")
 
-                        botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
-                        botao_fechar.click()
-                        print("Botão de fechar clicado com sucesso!")
+                    botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
+                    botao_ver_fatura.click()
 
-                        contagem += 1
-                        if contagem >= 5:
-                            break  
+                    print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
+                    time.sleep(3)
+
+                    botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
+                    botao_fechar.click()
+                    print("Botão de fechar clicado com sucesso!")
+
+                    contagem += 1
+                    if contagem >= 5:  # Baixar no máximo 5 faturas disponíveis
+                        break  
 
                 except Exception as e:
                     print(f"Erro ao baixar fatura de {mes_ano_fatura}: {e}")
@@ -143,6 +150,7 @@ def acessar_faturas(driver):
         print(f"Erro geral: {e}")
     finally:
         print("Processo finalizado. Navegador fechado.")
+
 
 
 
@@ -178,8 +186,6 @@ def testar_sessao():
         print("Verifique se a sessão foi restaurada!")
 
         acessar_faturas(driver)
-
-    input("Pressione ENTER para fechar o navegador...")
     driver.quit()
 
 def zip_pdfs(diretorio_downloads, nome_zip="faturas.zip"):
