@@ -24,7 +24,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options = Options()
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
-    options.add_argument("--headless=new")  # Novo modo headless que permite downloads
+    #options.add_argument("--headless=new")  # Novo modo headless que permite downloads
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
