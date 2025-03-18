@@ -33,7 +33,7 @@ meses_aceitos = gerar_ultimos_5_meses()
 print("Últimos 5 meses aceitos:", meses_aceitos)
 
 # Definindo o diretório para downloads, usando variável de ambiente ou padrão
-DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")
+DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Função para carregar dados da sessão
@@ -80,7 +80,7 @@ def acessar_faturas(driver):
         driver.refresh()
         print("Página recarregada.")
         
-        wait = WebDriverWait(driver, 20)
+        wait = WebDriverWait(driver, 30)
 
         # Fechar o banner de consentimento se estiver visível
         try:
@@ -161,7 +161,7 @@ def testar_sessao(cnpj):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_experimental_option("prefs", {
-        "download.default_directory": "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download",
+        "download.default_directory": DOWNLOAD_DIR,
         "download.prompt_for_download": False,
         "plugins.always_open_pdf_externally": True,
         "safebrowsing.enabled": True,
@@ -203,5 +203,18 @@ def zip_pdfs(diretorio_downloads, nome_zip="faturas.zip"):
 
     return zip_path
 
+
+def limpar_diretorio(diretorio):
+    """Remove todos os arquivos dentro do diretório."""
+    for arquivo in os.listdir(diretorio):
+        caminho_arquivo = os.path.join(diretorio, arquivo)
+        try:
+            if os.path.isfile(caminho_arquivo) or os.path.islink(caminho_arquivo):
+                os.unlink(caminho_arquivo)  # Remove arquivos e links simbólicos
+            elif os.path.isdir(caminho_arquivo):
+                os.rmdir(caminho_arquivo)  # Remove diretórios vazios (caso existam)
+        except Exception as e:
+            print(f"Erro ao apagar {caminho_arquivo}: {e}")
+            
 if __name__ == "__main__":
     testar_sessao()

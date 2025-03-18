@@ -1,6 +1,6 @@
 import os 
 from flask import Flask, request, jsonify, send_file
-from web_scrapper import testar_sessao, zip_pdfs
+from web_scrapper import testar_sessao, zip_pdfs, limpar_diretorio
 
 # API Flask
 app = Flask(__name__)
@@ -12,11 +12,14 @@ def scrape():
     data = request.json
     cnpj_cpf = data.get("cnpj_cpf")
 
+    limpar_diretorio(DOWNLOAD_DIR)
+
     if not cnpj_cpf:
         return jsonify({"erro": "campo obrigatório cnpj_cpf não inserido"}), 400
     
     if not testar_sessao(cnpj_cpf):
         return jsonify({"erro": "Falha ao testar sessão"}), 500
+
 
     caminho_zip = zip_pdfs(DOWNLOAD_DIR)
 
