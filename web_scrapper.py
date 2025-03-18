@@ -76,7 +76,7 @@ def acessar_faturas(driver):
         driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
         print("Página de faturas carregada.")
 
-        time.sleep(10)
+        time.sleep(20)
         driver.refresh()
         print("Página recarregada.")
         
@@ -143,21 +143,18 @@ def acessar_faturas(driver):
                 except Exception as e:
                     print(f"Erro ao baixar fatura de {mes_ano_fatura}: {e}")
             
-            zip_pdfs(DOWNLOAD_DIR)
 
         time.sleep(10)
     except Exception as e:
         print(f"Erro geral: {e}")
     finally:
-        print("Processo finalizado. Navegador fechado.")
+        print("Processo finalizado. Navegador fechado.")    
 
 
 
 
 # Função principal para testar a sessão
-def testar_sessao():
-    cnpj = input("Digite o CNPJ: ").strip().replace(".", "").replace("/", "").replace("-", "")
-
+def testar_sessao(cnpj):
     options = Options()
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
     options.add_argument("--disable-gpu")
@@ -188,24 +185,23 @@ def testar_sessao():
         acessar_faturas(driver)
     driver.quit()
 
+    return True
+
 def zip_pdfs(diretorio_downloads, nome_zip="faturas.zip"):
-    # Procurar todos os arquivos PDF no diretório de downloads
     arquivos_pdf = [f for f in os.listdir(diretorio_downloads) if f.endswith(".pdf")]
 
     if not arquivos_pdf:
         print("Nenhum arquivo PDF encontrado para compactar.")
-        return
+        return None  # Evita retornar um caminho inválido
 
-    # Caminho completo para o arquivo ZIP
     zip_path = os.path.join(diretorio_downloads, nome_zip)
 
-    # Criando o arquivo ZIP e adicionando os PDFs
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for arquivo in arquivos_pdf:
             caminho_completo = os.path.join(diretorio_downloads, arquivo)
-            zipf.write(caminho_completo, arcname=arquivo)  # arcname para evitar o caminho completo no zip
+            zipf.write(caminho_completo, os.path.basename(caminho_completo))
 
-    print(f"Arquivo ZIP criado com sucesso: {zip_path}")
+    return zip_path
 
 if __name__ == "__main__":
     testar_sessao()
