@@ -11,6 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
+import zipfile
 
 COOKIES_DIR = "cookies"
 URL_SITE = "https://pi.equatorialenergia.com.br/sua-conta/"
@@ -79,7 +80,7 @@ def acessar_faturas(driver):
         driver.refresh()
         print("Página recarregada.")
         
-        wait = WebDriverWait(driver, 20)
+        wait = WebDriverWait(driver, 120)
 
         # Fechar o banner de consentimento se estiver visível
         try:
@@ -91,7 +92,6 @@ def acessar_faturas(driver):
         
         try:
             wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
-
         except TimeoutException:
             print("Tabela de faturas não encontrada dentro do tempo limite.")
             return
@@ -102,53 +102,41 @@ def acessar_faturas(driver):
             print("Nenhuma fatura encontrada.")
         else:
             print(f"Encontradas {len(faturas)} faturas.")
+            
+            contagem = 0
 
-            # Ordenar as faturas pela data do mês (última fatura primeiro)
-            faturas_ordenadas = []
             for fatura in faturas:
                 try:
                     mes_ano_fatura = fatura.find_element(By.XPATH, ".//span[@class='referencia_legada']").text.strip()
                     print(mes_ano_fatura)
 
-                    # Convertendo para o formato datetime para facilitar a ordenação
-                    mes_ano_datetime = datetime.strptime(mes_ano_fatura, "%m/%Y")
-                    faturas_ordenadas.append((fatura, mes_ano_datetime))
+                    if mes_ano_fatura in meses_aceitos:
+                        print(f"Baixando fatura de {mes_ano_fatura}...")
+                        tr_element = wait.until(EC.element_to_be_clickable(
+                                    (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
+                                ))
+                                
+                        tr_element.click()
+                        print("Elemento <tr> clicado com sucesso!")
 
-                except Exception as e:
-                    print(f"Erro ao pegar a data da fatura: {e}")
+                        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
+                        botao_ver_fatura.click()
 
-            # Ordena as faturas pela data de forma decrescente (mais recente primeiro)
-            faturas_ordenadas.sort(key=lambda x: x[1], reverse=True)
+                        print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
+                        time.sleep(3)
 
-            contagem = 0
-            for fatura, _ in faturas_ordenadas:
-                try:
-                    mes_ano_fatura = fatura.find_element(By.XPATH, ".//span[@class='referencia_legada']").text.strip()
+                        botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
+                        botao_fechar.click()
+                        print("Botão de fechar clicado com sucesso!")
 
-                    # Baixando as faturas mais recentes
-                    print(f"Baixando fatura de {mes_ano_fatura}...")
-                    tr_element = wait.until(EC.element_to_be_clickable(
-                                (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
-                            ))
-                    tr_element.click()
-                    print("Elemento <tr> clicado com sucesso!")
-
-                    botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
-                    botao_ver_fatura.click()
-
-                    print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
-                    time.sleep(3)
-
-                    botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
-                    botao_fechar.click()
-                    print("Botão de fechar clicado com sucesso!")
-
-                    contagem += 1
-                    if contagem >= 5:
-                        break  # Limite de 5 faturas
+                        contagem += 1
+                        if contagem >= 5:
+                            break  
 
                 except Exception as e:
                     print(f"Erro ao baixar fatura de {mes_ano_fatura}: {e}")
+            
+            zip_pdfs(DOWNLOAD_DIR)
 
         time.sleep(10)
     except Exception as e:
@@ -193,6 +181,25 @@ def testar_sessao():
 
     input("Pressione ENTER para fechar o navegador...")
     driver.quit()
+
+def zip_pdfs(diretorio_downloads, nome_zip="faturas.zip"):
+    # Procurar todos os arquivos PDF no diretório de downloads
+    arquivos_pdf = [f for f in os.listdir(diretorio_downloads) if f.endswith(".pdf")]
+
+    if not arquivos_pdf:
+        print("Nenhum arquivo PDF encontrado para compactar.")
+        return
+
+    # Caminho completo para o arquivo ZIP
+    zip_path = os.path.join(diretorio_downloads, nome_zip)
+
+    # Criando o arquivo ZIP e adicionando os PDFs
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for arquivo in arquivos_pdf:
+            caminho_completo = os.path.join(diretorio_downloads, arquivo)
+            zipf.write(caminho_completo, arcname=arquivo)  # arcname para evitar o caminho completo no zip
+
+    print(f"Arquivo ZIP criado com sucesso: {zip_path}")
 
 if __name__ == "__main__":
     testar_sessao()
