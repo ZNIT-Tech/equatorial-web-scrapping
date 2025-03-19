@@ -1,0 +1,72 @@
+[
+    {
+      "name": "_gid",
+      "value": "GA1.3.107584976.1742270533",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "OptanonAlertBoxClosed",
+      "value": "2025-03-18T20:32:17.033Z",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "incap_ses_1696_2853004",
+      "value": "P3NoUaf2byLqu/zzGmeJF8XK2mcAAAAA2Tgra6wdRzUzJrrA6Ufanw",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "_ga_G80D1DLT1B",
+      "value": "GS1.1.1742402793.5.0.1742402806.0.0.0",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "OptanonConsent",
+      "value": "isGpcEnabled",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "_ga_R4PY4FPKHE",
+      "value": "GS1.1.1742402807.7.1.1742403034.0.0.0",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1381962060.1741805577",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742406728
+    }
+  ]
