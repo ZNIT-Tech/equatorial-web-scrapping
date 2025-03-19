@@ -6,7 +6,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./download:/app/download  # Persistência dos arquivos baixados
+      - ./download:/app/download
+      - ./cookies:/app/cookies  # Persistência dos arquivos baixados
     environment:
       - PYTHONUNBUFFERED=1
       - DOWNLOAD_DIR=/app/download  # Define o diretório de download no container

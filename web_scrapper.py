@@ -33,7 +33,7 @@ meses_aceitos = gerar_ultimos_5_meses()
 print("Últimos 5 meses aceitos:", meses_aceitos)
 
 # Definindo o diretório para downloads, usando variável de ambiente ou padrão
-DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
+DOWNLOAD_DIR = "/home/enzo/repositories/equatorial-web-scrapping/download"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Função para carregar dados da sessão
@@ -87,9 +87,10 @@ def acessar_faturas(driver):
             consent_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
             consent_button.click()
             print("Consentimento aceito!")
-        except Exception as e:
+        except:
             print("Banner de consentimento não encontrado ou já fechado.")
-        
+
+        # Verificar se há faturas disponíveis
         try:
             wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
         except TimeoutException:
@@ -103,7 +104,6 @@ def acessar_faturas(driver):
         else:
             print(f"Encontradas {len(faturas)} faturas.")
 
-            # Criando uma lista ordenada dos meses disponíveis
             faturas_disponiveis = []
             for fatura in faturas:
                 try:
@@ -117,12 +117,20 @@ def acessar_faturas(driver):
 
             contagem = 0
             for mes_ano_fatura, fatura in faturas_disponiveis:
+                if contagem >= 5:  # Se já baixou 5, para
+                    print("Já baixei 5 faturas. Encerrando loop.")
+                    break
+
                 try:
                     print(f"Baixando fatura de {mes_ano_fatura}...")
 
                     tr_element = wait.until(EC.element_to_be_clickable(
                         (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
                     ))
+                    
+                    # Rolando até o elemento antes de clicar
+                    driver.execute_script("arguments[0].scrollIntoView();", tr_element)
+                    time.sleep(1)  # Pequena pausa antes do clique
                     tr_element.click()
                     print("Elemento <tr> clicado com sucesso!")
 
@@ -132,25 +140,26 @@ def acessar_faturas(driver):
                     print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
                     time.sleep(3)
 
-                    botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
-                    botao_fechar.click()
-                    print("Botão de fechar clicado com sucesso!")
+                    # Fechar modal **depois** de baixar a fatura
+                    try:
+                        botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
+                        botao_fechar.click()
+                        print("Botão de fechar clicado com sucesso!")
+                    except:
+                        print("Erro ao fechar modal, tentando forçar fechamento...")
+                        driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
 
                     contagem += 1
-                    if contagem >= 5:  # Baixar no máximo 5 faturas disponíveis
-                        break  
+                    print(f"Contagem atual: {contagem}")
 
                 except Exception as e:
                     print(f"Erro ao baixar fatura de {mes_ano_fatura}: {e}")
-            
 
         time.sleep(10)
     except Exception as e:
         print(f"Erro geral: {e}")
     finally:
-        print("Processo finalizado. Navegador fechado.")    
-
-
+        print("Processo finalizado.")
 
 
 # Função principal para testar a sessão

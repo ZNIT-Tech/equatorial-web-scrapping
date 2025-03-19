@@ -5,7 +5,7 @@ from web_scrapper import testar_sessao, zip_pdfs, limpar_diretorio
 # API Flask
 app = Flask(__name__)
 
-DOWNLOAD_DIR = "C:\\Users\\Enzo Roosch\\Documents\\Repositories\\equatorial-web-scrapping\\download"
+DOWNLOAD_DIR = "/home/enzo/repositories/equatorial-web-scrapping/download"
 
 @app.route("/scrape", methods=["POST"])
 def scrape():
