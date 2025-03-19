@@ -33,8 +33,7 @@ meses_aceitos = gerar_ultimos_5_meses()
 print("Últimos 5 meses aceitos:", meses_aceitos)
 
 # Definindo o diretório para downloads, usando variável de ambiente ou padrão
-DOWNLOAD_DIR = "/home/enzo/repositories/equatorial-web-scrapping/download"
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+DOWNLOAD_DIR = os.environ.get('DOWNLOAD_DIR', '/app/download')
 
 # Função para carregar dados da sessão
 def carregar_dados_sessao(driver, cnpj):
