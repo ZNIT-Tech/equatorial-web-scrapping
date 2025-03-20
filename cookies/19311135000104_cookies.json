@@ -1,0 +1,82 @@
+[
+    {
+      "name": "_gid",
+      "value": "GA1.3.107584976.1742270533",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "OptanonAlertBoxClosed",
+      "value": "2025-03-18T20:32:17.033Z",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "incap_ses_1696_2853004",
+      "value": "h9DGFAdHymcBc+H4GmeJF09j3GcAAAAAxYl35PjIdSIcDc7PIFN0Qw",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "_ga_G80D1DLT1B",
+      "value": "GS1.1.1742507387.8.0.1742507391.0.0.0",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "OptanonConsent",
+      "value": "isGpcEnabled",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "_gat_gtag_UA_141689352_7",
+      "value": "1",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "_ga_R4PY4FPKHE",
+      "value": "GS1.1.1742509510.12.1.1742509853.0.0.0",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1381962060.1741805577",
+      "domain": "pi.equatorialenergia.com.br",
+      "path": "/",
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax",
+      "expiry": 1742513475 
+    }
+  ]
