@@ -12,6 +12,8 @@ def scrape():
     data = request.json
     cnpj_cpf = data.get("cnpj_cpf")
 
+    cnpj_cpf = cnpj_cpf.replace(".", "").replace("/", "").replace("-", "")
+
     limpar_diretorio(DOWNLOAD_DIR)
 
     if not cnpj_cpf:
