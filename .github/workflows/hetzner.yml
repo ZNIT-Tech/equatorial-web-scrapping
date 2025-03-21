@@ -37,7 +37,7 @@ jobs:
       - name: 🚀 Fazer deploy no Hetzner
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} << 'EOF'
-          cd /caminho/do/seu/projeto  # Ajuste o caminho do seu projeto no servidor
+          cd /equatorial-web-scrapping  # Ajuste o caminho do seu projeto no servidor
           git pull origin main  # Atualiza código
           docker-compose down    # Para containers antigos (se necessário)
           docker-compose up -d --build  # Sobe os novos containers
