@@ -18,19 +18,28 @@ jobs:
           mkdir -p ~/.ssh
           echo "$HETZNER_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H $HETZNER_HOST >> ~/.ssh/known_hosts
+          
+          # Diagnóstico para verificar o conteúdo do HETZNER_HOST
+          echo "IP do servidor: $HETZNER_HOST"
+          
+          # Adiciona a chave do servidor ao known_hosts
+          ssh-keyscan -H $HETZNER_HOST >> ~/.ssh/known_hosts || echo "Erro ao tentar adicionar a chave do host"
+          
         env:
           HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
 
       - name: 🔌 Testar conexão SSH
-        run: ssh -i ~/.ssh/id_rsa ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} "echo '✅ Conexão SSH bem-sucedida!'"
+        run: |
+          echo "Testando conexão SSH com o servidor Hetzner..."
+          ssh -i ~/.ssh/id_rsa ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} "echo '✅ Conexão SSH bem-sucedida!'"
 
       - name: 🚀 Fazer deploy no Hetzner
         run: |
           ssh -i ~/.ssh/id_rsa ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} << 'EOF'
-          cd /equatorial-web-scrapping  
-          git pull origin main 
-          docker-compose down  
-          docker-compose up -d --build  
-            echo '🚀 Deploy finalizado com sucesso!'
+          cd /caminho/do/seu/projeto  # Ajuste o caminho do seu projeto no servidor
+          git pull origin main  # Atualiza código
+          docker-compose down    # Para containers antigos (se necessário)
+          docker-compose up -d --build  # Sobe os novos containers
+          echo '🚀 Deploy finalizado com sucesso!'
           EOF
