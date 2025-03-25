@@ -103,7 +103,7 @@ def obter_faturas_usina(driver):
         print(f"Erro ao obter faturas: {e}")
         return []
 
-def baixar_faturas_usina(driver, faturas_disponiveis, max_downloads=5):
+def baixar_faturas_usina(driver, faturas_disponiveis, max_downloads=1):
     """Baixa as faturas disponíveis, até um limite máximo."""
     wait = WebDriverWait(driver, 30)
     contagem = 0
