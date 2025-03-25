@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
@@ -149,6 +149,93 @@ def baixar_faturas_usina(driver, faturas_disponiveis, max_downloads=5):
     print("Processo de download finalizado.")
 
 
+def processar_todas_contas(driver):
+    """ Alterna entre as contas contrato e chama obter_faturas_usina para cada uma """
+    wait = WebDriverWait(driver, 30)
+
+    # Primeiro, tentar fechar qualquer popup/modal que possa estar na tela
+    fechar_popups(driver)
+
+    try:
+        # Tentar buscar o select de forma segura
+        select_element = wait.until(EC.presence_of_element_located((By.ID, "conta_contrato")))
+        select = Select(select_element)
+        total_opcoes = len(select.options)
+
+        for index in range(total_opcoes):
+            tentativa = 0
+            sucesso = False
+
+            # Tentativa de clicar no select até 3 vezes
+            while tentativa < 3 and not sucesso:
+                try:
+                    # Recarregar o elemento select a cada iteração
+                    select_element = wait.until(EC.presence_of_element_located((By.ID, "conta_contrato")))
+                    select = Select(select_element)
+
+                    # Scroll até o elemento para garantir visibilidade
+                    driver.execute_script("arguments[0].scrollIntoView();", select_element)
+                    time.sleep(1)
+
+                    # Clicar no select para abrir as opções
+                    select_element.click()
+                    time.sleep(1)
+
+                    # Selecionar a conta contrato pelo índice
+                    select.select_by_index(index)
+                    print(f"✔ Conta contrato alterada para: {select.first_selected_option.text}")
+
+                    # Espera para garantir que a mudança seja processada
+                    time.sleep(2)
+
+                    obter_faturas_usina(driver)  # Chama a função para baixar as faturas
+                    sucesso = True  # Se não ocorrer erro, marca como sucesso
+                except Exception as e:
+                    print(f"❌ Erro ao tentar alterar conta contrato: {e}")
+                    tentativa += 1  # Aumenta a tentativa
+                    if tentativa == 3:
+                        print("❌ Não foi possível alternar a conta contrato após 3 tentativas.")
+                        break  # Se 3 tentativas falharem, sai do loop
+
+    except Exception as e:
+        print(f"❌ Erro ao acessar o select de contas contrato: {e}")
+
+    print("✅ Todas as contas contrato foram processadas.")
+
+def fechar_popups(driver):
+    """ Fecha pop-ups ou banners que possam estar bloqueando interações na página. """
+    try:
+        wait = WebDriverWait(driver, 5)
+
+        # Verifica se o pop-up de cookies (ou qualquer modal) está presente
+        popup = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ot-btn-container")))
+
+        if popup.is_displayed():
+            print("🛑 Fechando pop-up de cookies...")
+            
+            # Tenta clicar no botão de aceitar cookies
+            try:
+                botao_aceitar = popup.find_element(By.XPATH, "//button[contains(text(),'Aceitar')]")
+                botao_aceitar.click()
+                time.sleep(2)  # Aguarde um tempo para o pop-up fechar
+                print("✅ Pop-up fechado.")
+            except Exception:
+                print("⚠ Não foi possível clicar no botão de aceitar.")
+
+            # Verifica se ainda há bloqueio e tenta remover
+            try:
+                script = """
+                var elem = document.querySelector('.ot-btn-container');
+                if (elem) { elem.remove(); }
+                """
+                driver.execute_script(script)
+                print("✅ Removendo overlay de cookies via JavaScript.")
+            except Exception as e:
+                print(f"⚠ Erro ao remover overlay via JS: {e}")
+
+    except Exception:
+        print("✅ Nenhum pop-up para fechar.")
+
 # Função principal para testar a sessão
 def testar_sessao_usina(cnpj):
     options = Options()
@@ -179,7 +266,7 @@ def testar_sessao_usina(cnpj):
         time.sleep(2)
         print("Verifique se a sessão foi restaurada!")
 
-        obter_faturas_usina(driver)
+        processar_todas_contas(driver)
     driver.quit()
 
     return True
