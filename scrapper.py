@@ -1,168 +1,139 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
-from webdriver_manager.chrome import ChromeDriverManager
-import time
-from datetime import datetime, timedelta
-import os
-import tempfile
+import asyncio
 import json
-
 import os
-
-# Define um diretório dentro do container
-COOKIES_DIR = "cookies"
-DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")  # Usa variável de ambiente ou default
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-
-# Garante que o diretório existe
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
-
 import random
+import time
+from playwright.async_api import async_playwright
+
+# Diretórios para armazenar cookies
+COOKIES_DIR = "cookies"
+DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+os.makedirs(COOKIES_DIR, exist_ok=True)
 
 def random_delay(min_delay=1, max_delay=3):
     time.sleep(random.uniform(min_delay, max_delay))
 
+async def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)  # Altere para True se quiser rodar em segundo plano
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+            accept_downloads=True
+        )
+        page = await context.new_page()
 
-def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
-    options = Options()
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
-    #options.add_argument("--headless=new")  # Novo modo headless que permite downloads
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option('excludeSwitches', ['enable-automation'])
-    options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("Accept-Language: en-US,en;q=0.9,pt-BR;q=0.8,pt;q=0.7")
-    options.add_argument("Accept-Encoding: gzip, deflate, br")
-    options.add_argument("Connection: keep-alive")
-    options.add_experimental_option("prefs", {
-    "download.default_directory": DOWNLOAD_DIR,  # Caminho onde os arquivos serão baixados
-    "download.prompt_for_download": False,  # Impede a janela de confirmação 
-    "plugins.always_open_pdf_externally": True,  # Impede que o PDF seja aberto no navegador
-    "safebrowsing.enabled": True,  # Habilita o download seguro
-    "download.directory_upgrade": True,  # Força o Chrome a usar o diretório especificado
-    })
+        try:
+            # Acessa o site
+            await page.goto("https://pi.equatorialenergia.com.br/")
+            print("Página carregada.")
 
-    # Create a temporary directory for the user data to avoid conflicts
-    user_data_dir = tempfile.mkdtemp()
-    options.add_argument(f"--user-data-dir={user_data_dir}")
+            # Aceitar cookies
+            try:
+                await page.locator("#onetrust-accept-btn-handler").click(timeout=5000)
+                print("Cookies aceitos.")
+            except:
+                print("Nenhum botão de cookies encontrado.")
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            random_delay()
 
-    wait = WebDriverWait(driver, 15)
+            # Clicar em "Continuar no site"
+            await page.locator("//button[contains(text(), 'Continuar no site')]").click()
+            print("Continuando no site.")
 
-    try:
-        driver.get("https://pi.equatorialenergia.com.br/")
-        print("Página carregada.")
-    
+            # Aceitar aviso LGPD
+            await page.locator("#aviso_aceite").click()
+            print("Aviso de aceite marcado.")
 
-        botao_cookies = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
-        botao_cookies.click()
-        print("Cookies aceitos.")
+            await page.locator("#lgpd_accept").click()
+            print("Enviado aceite LGPD.")
 
-        random_delay()
+            random_delay()
 
-        botao_continuar = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continuar no site')]")))
-        botao_continuar.click()
-        print("Continuando no site.")
+            login_sucesso = False
+            tentativas = 0
+            max_tentativas = 5
 
-        checkbox_aviso = wait.until(EC.element_to_be_clickable((By.ID, "aviso_aceite")))
-        checkbox_aviso.click()
-        print("Aviso de aceite marcado.")
+            while not login_sucesso and tentativas < max_tentativas:
+                tentativas += 1
+                print(f"Tentativa de login #{tentativas}...")
 
-        botao_enviar = wait.until(EC.element_to_be_clickable((By.ID, "lgpd_accept")))
-        botao_enviar.click()
-        print("Enviado aceite LGPD.")
-        random_delay()
-        login_sucesso = False
-        tentativas = 0
-        max_tentativas = 5  # Define um limite de tentativas para evitar loops infinitos
+                campo_cnpj_cpf = await page.wait_for_selector("#identificador-otp")
 
-        while not login_sucesso and tentativas < max_tentativas:
-            tentativas += 1
-            print(f"Tentativa de login #{tentativas}...")
+                # Remove caracteres especiais do CPF/CNPJ
+                cnpj_cpf_limpo = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
 
-            campo_cnpj_cpf = wait.until(EC.element_to_be_clickable((By.ID, "identificador-otp")))
-            campo_cnpj_cpf.clear()
-            cnpj_cpf = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
+                # Digita um caractere por vez com um pequeno delay para simular digitação humana
+                for char in cnpj_cpf_limpo:
+                    await campo_cnpj_cpf.type(char, delay=100)  # Pequeno delay entre teclas
+                print("CNPJ inserido caractere por caractere.")
 
-            for char in cnpj_cpf:
-                campo_cnpj_cpf.send_keys(char)
+                # Pressiona a seta para a esquerda
+                await campo_cnpj_cpf.press("ArrowLeft")
+                print("Seta para a esquerda pressionada.")
+
+                random_delay()
+                await page.locator("#envia-identificador-otp").click()
+                print("Primeiro botão 'Entrar' clicado.")
+
                 random_delay()
 
-            print("CNPJ inserido.")
+                # Preenche senha
+                campo_senha = await page.wait_for_selector("#senha-identificador")
+                await campo_senha.fill(senha)
+                print("Senha inserida.")
 
-            campo_cnpj_cpf.send_keys(Keys.ARROW_LEFT)
+                random_delay()
+                await page.locator("#envia-identificador").click()
+                print("Segundo botão 'Entrar' clicado.")
 
-            botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador-otp")))
-            botao_entrar.click()
-            print("Primeiro botão 'Entrar' clicado.")
-            
-            random_delay()
-            campo_senha = wait.until(EC.element_to_be_clickable((By.ID, "senha-identificador")))
-            campo_senha.send_keys(f"{senha}")
-            print("Senha inserida.")
+                time.sleep(15)  # Espera o carregamento da página
 
-            random_delay()
-            botao_entrar = wait.until(EC.element_to_be_clickable((By.ID, "envia-identificador")))
-            botao_entrar.click()
-            print("Segundo botão 'Entrar' clicado.")
+                # Verificar erro no login
+                if await page.locator("//span[contains(text(), 'Atenção')]").is_visible():
+                    print("Aviso de erro detectado! Recarregando a página e tentando novamente...")
+                    await page.reload()
+                    await asyncio.sleep(5)
+                    continue  # Tentar novamente
 
-            random_delay()
+                # Verifica se o login foi bem-sucedido pela URL
+                if "/sua-conta/" in page.url:
+                    print("Login bem sucedido!")
+                    login_sucesso = True
+                    break
+                else:
+                    print("Login não bem sucedido, tentando novamente...")
+                    await page.reload()
+                    await asyncio.sleep(5)
 
-            try:
-                alerta = wait.until(EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Atenção')]")))
-                print("Aviso de erro detectado! Recarregando a página e tentando novamente...")
+            if not login_sucesso:
+                print("Falha no login após várias tentativas. Verifique as credenciais.")
+                return
 
-                driver.refresh()
-                time.sleep(5)
+            # Salvar cookies
+            cnpj = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
+            cookies = await context.cookies()
+            with open(os.path.join(COOKIES_DIR, f"{cnpj}_cookies.json"), "w") as file:
+                json.dump(cookies, file)
 
-            except:
-                print("Sem erros")
+            # Salvar localStorage
+            local_storage = await page.evaluate("JSON.stringify(localStorage);")
+            with open(os.path.join(COOKIES_DIR, f"{cnpj}_localStorage.json"), "w") as file:
+                file.write(local_storage)
 
-            try:
-                # Aguarda a mudança da URL
-                wait.until(EC.url_contains("/sua-conta/"))
-                print("Login bem sucedido!")
-                login_sucesso = True  # Sai do loop se a URL for a esperada
-            except:
-                print("Login não bem sucedido, tentando novamente...")
-                driver.refresh()
-                time.sleep(5)  # Espera antes de tentar novamente
+            # Salvar sessionStorage
+            session_storage = await page.evaluate("JSON.stringify(sessionStorage);")
+            with open(os.path.join(COOKIES_DIR, f"{cnpj}_sessionStorage.json"), "w") as file:
+                file.write(session_storage)
 
-        if not login_sucesso:
-            print("Falha no login após várias tentativas. Verifique as credenciais.")
+            print("Cookies e storage salvos com sucesso.")
 
-        else:
-        
-                cnpj = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
-                print("Login bem sucedido")
-                cookies = driver.get_cookies()
-                with open(os.path.join(COOKIES_DIR, f"{cnpj}_cookies.json"), "w") as file:
-                    json.dump(cookies, file)
+        except Exception as e:
+            print(f"Erro geral: {e}")
 
-                # Salvar localStorage
-                local_storage = driver.execute_script("return JSON.stringify(localStorage);")
-                with open(os.path.join(COOKIES_DIR, f"{cnpj}_localStorage.json"), "w") as file:
-                    file.write(local_storage)
+        finally:
+            await browser.close()
+            print("Navegador fechado.")
 
-                # Salvar sessionStorage
-                session_storage = driver.execute_script("return JSON.stringify(sessionStorage);")
-                with open(os.path.join(COOKIES_DIR, f"{cnpj}_sessionStorage.json"), "w") as file:
-                    file.write(session_storage)
-    except Exception as e:
-        print(f"Erro geral: {e}")
-
-    finally:
-        driver.quit()
-        print("Navegador fechado.")
-
-scrape_data("1137120304", "25/08/1985", "Piauí")
+# Chamar a função assíncrona
+asyncio.run(scrape_data("19.311.135/0001-04", "mcpapelaria@outlook.com", "Piauí"))
