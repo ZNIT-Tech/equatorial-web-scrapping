@@ -44,7 +44,7 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     options.add_argument("Connection: keep-alive")
     options.add_experimental_option("prefs", {
     "download.default_directory": DOWNLOAD_DIR,  # Caminho onde os arquivos serão baixados
-    "download.prompt_for_download": False,  # Impede a janela de confirmação
+    "download.prompt_for_download": False,  # Impede a janela de confirmação 
     "plugins.always_open_pdf_externally": True,  # Impede que o PDF seja aberto no navegador
     "safebrowsing.enabled": True,  # Habilita o download seguro
     "download.directory_upgrade": True,  # Força o Chrome a usar o diretório especificado
@@ -62,7 +62,7 @@ def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
     try:
         driver.get("https://pi.equatorialenergia.com.br/")
         print("Página carregada.")
-
+    
 
         botao_cookies = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
         botao_cookies.click()
