@@ -1,7 +1,9 @@
 import os 
+import asyncio
 from flask import Flask, request, jsonify, send_file
 from web_scrapper import testar_sessao, zip_pdfs, limpar_diretorio
 from web_scrapper_usina import testar_sessao_usina
+from login import save_Credentials
 
 # API Flask
 app = Flask(__name__)
@@ -54,6 +56,24 @@ def scrape_usina():
     else:
         return jsonify({"erro": "Nenhum PDF encontrado para compactar"}), 404
 
+@app.route("/login", methods=["POST"])
+def save_credentials():
+    data = request.json
+    cnpj_cpf = data.get("cnpj_cpf")
+    senha = data.get("senha")
+    estado = data.get("estado")
+
+    cnpj_cpf = cnpj_cpf.replace(".", "").replace("/", "").replace("-", "")
+
+    if not cnpj_cpf or not senha or not estado:
+        return jsonify({"erro": "campo obrigatório cnpj_cpf ou senha não inserido"}), 400
+
+    try:
+        asyncio.run(save_Credentials(cnpj_cpf, senha, estado))
+        return jsonify({"mensagem": "Scraping concluído com sucesso!"}), 200
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao salvar credenciais: {str(e)}"}), 500
+    
 
 
 @app.route("/check", methods=["GET"])

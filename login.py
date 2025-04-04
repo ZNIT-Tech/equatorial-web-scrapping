@@ -14,7 +14,7 @@ os.makedirs(COOKIES_DIR, exist_ok=True)
 def random_delay(min_delay=1, max_delay=3):
     time.sleep(random.uniform(min_delay, max_delay))
 
-async def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
+async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)  # Altere para True se quiser rodar em segundo plano
         context = await browser.new_context(
@@ -135,5 +135,4 @@ async def scrape_data(client_cpf_cnpj: str, senha: str, estado: str):
             await browser.close()
             print("Navegador fechado.")
 
-# Chamar a função assíncrona
-asyncio.run(scrape_data("19.311.135/0001-04", "mcpapelaria@outlook.com", "Piauí"))
+
