@@ -12,43 +12,13 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 import zipfile
+from web_scrapper import ajustar_cookies_playwright_para_selenium, carregar_dados_sessao
 
 COOKIES_DIR = "cookies"
 URL_SITE = "https://pi.equatorialenergia.com.br/sua-conta/"
 DOWNLOAD_DIR = os.environ.get('DOWNLOAD_DIR', '/app/download')
 
 # Função para carregar dados da sessão
-def carregar_dados_sessao_usina(driver, cnpj):
-    cookie_path = os.path.join(COOKIES_DIR, f"{cnpj}_cookies.json")
-    local_storage_path = os.path.join(COOKIES_DIR, f"{cnpj}_localStorage.json")
-    session_storage_path = os.path.join(COOKIES_DIR, f"{cnpj}_sessionStorage.json")
-
-    if not os.path.exists(cookie_path):
-        print(f"Nenhum dado de sessão encontrado para o CNPJ {cnpj}.")
-        return False
-
-    with open(cookie_path, "r") as file:
-        cookies = json.load(file)
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-
-    print("Cookies carregados com sucesso!")
-
-    if os.path.exists(local_storage_path):
-        with open(local_storage_path, "r") as file:
-            local_storage_data = json.load(file)
-        for key, value in local_storage_data.items():
-            driver.execute_script(f"localStorage.setItem({json.dumps(key)}, {json.dumps(value)});")
-
-    if os.path.exists(session_storage_path):
-        with open(session_storage_path, "r") as file:
-            session_storage_data = json.load(file)
-        for key, value in session_storage_data.items():
-            driver.execute_script(f"sessionStorage.setItem({json.dumps(key)}, {json.dumps(value)});")
-
-    print("Local Storage e Session Storage carregados!")
-
-    return True
 
 def obter_faturas_usina(driver):
     """Acessa a página e retorna uma lista de faturas disponíveis."""
@@ -261,7 +231,7 @@ def testar_sessao_usina(cnpj):
     driver.get(URL_SITE)
     time.sleep(2)
 
-    if carregar_dados_sessao_usina(driver, cnpj):
+    if carregar_dados_sessao(driver, cnpj):
         driver.refresh()
         time.sleep(2)
         print("Verifique se a sessão foi restaurada!")
