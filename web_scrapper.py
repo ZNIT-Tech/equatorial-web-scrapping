@@ -28,6 +28,24 @@ def gerar_ultimos_5_meses():
 
     return meses_validos
 
+# Função para adaptar os cookies do Playwright para o formato do Selenium
+def ajustar_cookies_playwright_para_selenium(cookies_playwright):
+    cookies_selenium = []
+    for cookie in cookies_playwright:
+        novo_cookie = {
+            "name": cookie["name"],
+            "value": cookie["value"],
+            "domain": cookie["domain"],
+            "path": cookie.get("path", "/"),
+            "secure": cookie.get("secure", False),
+            "httpOnly": cookie.get("httpOnly", False),
+        }
+        if "expires" in cookie and cookie["expires"] != -1:
+            novo_cookie["expiry"] = int(cookie["expires"])
+        cookies_selenium.append(novo_cookie)
+    return cookies_selenium
+
+
 # Gerando os meses aceitos
 meses_aceitos = gerar_ultimos_5_meses()
 print("Últimos 5 meses aceitos:", meses_aceitos)
@@ -46,9 +64,15 @@ def carregar_dados_sessao(driver, cnpj):
         return False
 
     with open(cookie_path, "r") as file:
-        cookies = json.load(file)
-    for cookie in cookies:
-        driver.add_cookie(cookie)
+        cookies_playwright = json.load(file)
+
+    cookies_selenium = ajustar_cookies_playwright_para_selenium(cookies_playwright)
+
+    for cookie in cookies_selenium:
+        try:
+            driver.add_cookie(cookie)
+        except Exception as e:
+            print(f"Erro ao adicionar cookie {cookie['name']}: {e}")
 
     print("Cookies carregados com sucesso!")
 
