@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y wget curl unzip \
 && apt-get install -y /tmp/chrome.deb \
 && rm /tmp/chrome.deb
 
+
 ENV DOWNLOAD_DIR=/app/download
 
 # Define diretório de trabalho
@@ -44,6 +45,8 @@ COPY . .
 
 # Instala as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
+
+RUN playwright install
 
 # Exposição da porta do Flask
 EXPOSE 5000
