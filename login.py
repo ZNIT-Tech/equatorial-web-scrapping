@@ -5,26 +5,28 @@ import random
 import time
 from playwright.async_api import async_playwright
 
-# Diretórios para armazenar cookies
 COOKIES_DIR = "cookies"
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(COOKIES_DIR, exist_ok=True)
 
-def random_delay(min_delay=1, max_delay=3):
+def random_delay(min_delay=1.5, max_delay=3.5):
     time.sleep(random.uniform(min_delay, max_delay))
 
 async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=True, slow_mo=80)  # mais natural
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-            accept_downloads=True
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+            accept_downloads=True,
+            viewport={"width": 1280, "height": 800},
+            locale="pt-BR",
+            timezone_id="America/Sao_Paulo"
         )
         page = await context.new_page()
 
         try:
-            await page.goto("https://pi.equatorialenergia.com.br/")
+            await page.goto("https://pi.equatorialenergia.com.br/", timeout=60000)
             print("Página carregada.")
 
             try:
@@ -38,10 +40,8 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
             print("Continuando no site.")
 
             await page.locator("#aviso_aceite").click()
-            print("Aviso de aceite marcado.")
-
             await page.locator("#lgpd_accept").click()
-            print("Enviado aceite LGPD.")
+            print("Aviso e LGPD aceitos.")
 
             random_delay()
 
@@ -53,34 +53,31 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
                 tentativas += 1
                 print(f"Tentativa de login #{tentativas}...")
 
-                campo_cnpj_cpf = await page.wait_for_selector("#identificador-otp")
+                campo_cnpj_cpf = await page.wait_for_selector("#identificador-otp", timeout=10000)
                 cnpj_cpf_limpo = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
 
                 for char in cnpj_cpf_limpo:
-                    await campo_cnpj_cpf.type(char, delay=100)
-                print("CNPJ inserido caractere por caractere.")
+                    await campo_cnpj_cpf.type(char, delay=random.randint(90, 140))
+                print("CNPJ inserido.")
 
                 await campo_cnpj_cpf.press("ArrowLeft")
-                print("Seta para a esquerda pressionada.")
-
                 random_delay()
+
                 await page.locator("#envia-identificador-otp").click()
                 print("Primeiro botão 'Entrar' clicado.")
-
                 random_delay()
 
-                campo_senha = await page.wait_for_selector("#senha-identificador")
+                campo_senha = await page.wait_for_selector("#senha-identificador", timeout=10000)
                 await campo_senha.fill(senha)
                 print("Senha inserida.")
-
                 random_delay()
+
                 await page.locator("#envia-identificador").click()
                 print("Segundo botão 'Entrar' clicado.")
+                await asyncio.sleep(10)
 
-                time.sleep(15)
-
-                if await page.locator("//span[contains(text(), 'Atenção')]").is_visible():
-                    print("Aviso de erro detectado! Recarregando a página e tentando novamente...")
+                if await page.locator("//span[contains(text(), 'Atenção')]").is_visible(timeout=3000):
+                    print("Erro detectado, recarregando...")
                     await page.reload()
                     await asyncio.sleep(5)
                     continue
@@ -90,12 +87,12 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
                     login_sucesso = True
                     break
                 else:
-                    print("Login não bem sucedido, tentando novamente...")
+                    print("Login falhou, tentando de novo...")
                     await page.reload()
                     await asyncio.sleep(5)
 
             if not login_sucesso:
-                print("Falha no login após várias tentativas. Verifique as credenciais.")
+                print("Não conseguiu logar após várias tentativas.")
                 return None
 
             cookies = await context.cookies()
@@ -105,15 +102,12 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
             cnpj = client_cpf_cnpj.replace(".", "").replace("/", "").replace("-", "")
             with open(os.path.join(COOKIES_DIR, f"{cnpj}_cookies.json"), "w") as file:
                 json.dump(cookies, file)
-
             with open(os.path.join(COOKIES_DIR, f"{cnpj}_localStorage.json"), "w") as file:
                 file.write(local_storage)
-
             with open(os.path.join(COOKIES_DIR, f"{cnpj}_sessionStorage.json"), "w") as file:
                 file.write(session_storage)
 
-            print("Cookies e storage salvos com sucesso.")
-
+            print("Cookies e storages salvos.")
             return {
                 "cookies": cookies,
                 "localStorage": json.loads(local_storage),
@@ -121,7 +115,7 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
             }
 
         except Exception as e:
-            print(f"Erro geral: {e}")
+            print(f"Erro: {e}")
             return None
 
         finally:
