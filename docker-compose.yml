@@ -4,11 +4,13 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "5000:5000"   # Porta da API Flask
+      - "5900:5900"   # Porta do VNC
     volumes:
       - ./download:/app/download
-      - ./cookies:/app/cookies  # Persistência dos arquivos baixados
+      - ./cookies:/app/cookies
     environment:
       - PYTHONUNBUFFERED=1
-      - DOWNLOAD_DIR=/app/download  # Define o diretório de download no container
-    restart: always  # Garante que o container reinicie automaticamente em caso de falha
+      - DOWNLOAD_DIR=/app/download
+      - DISPLAY=:1  # Define o display usado pelo Xvfb
+    restart: always
