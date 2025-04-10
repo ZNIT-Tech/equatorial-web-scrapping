@@ -22,7 +22,7 @@ def random_delay(min_delay=1.5, max_delay=3.5):
 
 async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, slow_mo=80)  # mais natural
+        browser = await p.chromium.launch(headless=True, slow_mo=80)  # mais natura
         context = await browser.new_context(
             #user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
             user_agent=random.choice(user_agents),
