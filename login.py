@@ -4,6 +4,7 @@ import os
 import random
 import time
 from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
 
 COOKIES_DIR = "cookies"
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR", "download")
@@ -26,18 +27,65 @@ user_agents = [
 def random_delay(min_delay=1.5, max_delay=3.5):
     time.sleep(random.uniform(min_delay, max_delay))
 
+
 async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, slow_mo=80)  # mais natura
+        browser = await p.chromium.launch(headless=False, slow_mo=80)
+        
+        # Carregar cookies
+        cookies_path = os.path.join(COOKIES_DIR, "cookies.json")
+        if os.path.exists(cookies_path):
+            with open(cookies_path, "r") as f:
+                cookies = json.load(f)
+        else:
+            cookies = []
+
         context = await browser.new_context(
-            #user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
             user_agent=random.choice(user_agents),
             accept_downloads=True,
             viewport={"width": 1280, "height": 800},
             locale="pt-BR",
             timezone_id="America/Sao_Paulo"
         )
+
+        # Adicionar cookies ao contexto
+        if cookies:
+            await context.add_cookies(cookies)
+
+        # Injetar localStorage
+        local_storage_path = os.path.join(COOKIES_DIR, "localStorage.json")
+        if os.path.exists(local_storage_path):
+            with open(local_storage_path, "r") as f:
+                local_storage = json.load(f)
+            local_storage_str = json.dumps(local_storage)
+            await context.add_init_script(f"""
+                (() => {{
+                    const storage = {local_storage_str};
+                    for (const [key, value] of Object.entries(storage)) {{
+                        localStorage.setItem(key, value);
+                    }}
+                }})();
+            """)
+
+    
+
+        # Injetar sessionStorage
+        session_storage_path = os.path.join(COOKIES_DIR, "sessionStorage.json")
+        if os.path.exists(session_storage_path):
+            with open(session_storage_path, "r") as f:
+                session_storage = json.load(f)
+            session_storage_str = json.dumps(session_storage)
+            await context.add_init_script(f"""
+                (() => {{
+                    const storage = {session_storage_str};
+                    for (const [key, value] of Object.entries(storage)) {{
+                        sessionStorage.setItem(key, value);
+                    }}
+                }})();
+            """)
+
         page = await context.new_page()
+        #await stealth_async(page)
         try:
             await page.goto("https://pi.equatorialenergia.com.br/", timeout=60000)
             print("Página carregada.")
