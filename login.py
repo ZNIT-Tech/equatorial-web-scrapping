@@ -110,7 +110,7 @@ async def save_Credentials(client_cpf_cnpj: str, senha: str, estado: str):
             
             login_sucesso = False
             tentativas = 0
-            max_tentativas = 3
+            max_tentativas = 5
             
             while not login_sucesso and tentativas < max_tentativas:
                 tentativas += 1
