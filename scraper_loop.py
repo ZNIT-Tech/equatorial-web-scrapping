@@ -77,6 +77,20 @@ print("Últimos 5 meses aceitos:", meses_aceitos)
 # Definindo o diretório para downloads, usando variável de ambiente ou padrão
 DOWNLOAD_DIR = os.environ.get('DOWNLOAD_DIR', '/app/download')
 
+def proximo_mes(alvo):
+    mes_atual = datetime.strptime(alvo, "%m/%Y")
+    return (mes_atual + relativedelta(months=1)).strftime("%m/%Y")
+
+def atualizar_alvo_usuario(usuario_id, novo_alvo):
+    response = supabase.table("credenciais_clientes").update({
+        "alvo": novo_alvo
+    }).eq("id", usuario_id).execute()
+    
+    if response.status_code == 200:
+        print(f"🟢 Alvo atualizado para {novo_alvo}")
+    else:
+        print("🔴 Falha ao atualizar alvo:", response)
+
 def buscar_sessao_por_cpf(cpf):
     response = supabase.table("credenciais_clientes").select("*").eq("cnpj_cpf", cpf).order("id", desc=True).limit(1).execute()
     if response.data:
@@ -127,112 +141,84 @@ def carregar_dados_sessao(driver, cnpj):
     return True
 
 # Função para acessar a página de faturas e fazer o download
-def acessar_faturas(driver):
+def baixar_fatura_alvo(driver, cnpj):
+    sessao = buscar_sessao_por_cpf(sessao["cnpj_cpf"])
+    alvo = sessao.get("alvo")  # Ex: "03/2024"
+    print(f"🔍 Buscando fatura alvo: {alvo}")
+    if not alvo:
+        print(f"⚠️ Usuário {sessao.get('nome')} sem campo 'alvo'.")
+        return
+    
+    driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
+    time.sleep(20)
+    driver.refresh()
+    wait = WebDriverWait(driver, 30)
+
+    # Aceitar cookies se necessário
     try:
-        time.sleep(1)
-        driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
-        print("Página de faturas carregada.")
+        consent_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
+        consent_button.click()
+    except:
+        pass
 
-        time.sleep(20)
-        driver.refresh()
-        print("Página recarregada.")
-        
-        wait = WebDriverWait(driver, 30)
+    # Aguarda a tabela carregar
+    try:
+        wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
+    except TimeoutException:
+        print("❌ Tabela de faturas não carregou.")
+        return
 
-        # Fechar o banner de consentimento se estiver visível
+    faturas = driver.find_elements(By.XPATH, "//table//tr[@data-numero-fatura]")
+    for fatura in faturas:
         try:
-            consent_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
-            consent_button.click()
-            print("Consentimento aceito!")
-        except:
-            print("Banner de consentimento não encontrado ou já fechado.")
+            mes_ano_fatura = fatura.find_element(By.XPATH, ".//span[@class='referencia_legada']").text.strip()
+            if mes_ano_fatura == alvo:
+                print(f"🔍 Fatura do mês {alvo} encontrada! Baixando...")
 
-        # Verificar se há faturas disponíveis
-        try:
-            wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
-        except TimeoutException:
-            print("Tabela de faturas não encontrada dentro do tempo limite.")
-            return
+                tr_element = wait.until(EC.element_to_be_clickable(
+                    (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{alvo}']]")
+                ))
 
-        faturas = driver.find_elements(By.XPATH, "//table//tr[@data-numero-fatura]")
+                driver.execute_script("arguments[0].scrollIntoView();", tr_element)
+                time.sleep(1)
+                tr_element.click()
 
-        if len(faturas) == 0:
-            print("Nenhuma fatura encontrada.")
-        else:
-            print(f"Encontradas {len(faturas)} faturas.")
-
-            faturas_disponiveis = []
-            for fatura in faturas:
-                try:
-                    mes_ano_fatura = fatura.find_element(By.XPATH, ".//span[@class='referencia_legada']").text.strip()
-                    faturas_disponiveis.append((mes_ano_fatura, fatura))
-                except:
-                    continue
-
-            # Ordenar as faturas do mais recente para o mais antigo
-            faturas_disponiveis.sort(key=lambda x: datetime.strptime(x[0], "%m/%Y"), reverse=True)
-
-            contagem = 0
-            for mes_ano_fatura, fatura in faturas_disponiveis:
-                if contagem >= 5:  # Se já baixou 5, para
-                    print("Já baixei 5 faturas. Encerrando loop.")
-                    break
-
-                try:
-                    print(f"Baixando fatura de {mes_ano_fatura}...")
-
-                    tr_element = wait.until(EC.element_to_be_clickable(
-                        (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{mes_ano_fatura}']]")
-                    ))
-                    
-                    driver.execute_script("arguments[0].scrollIntoView();", tr_element)
-                    time.sleep(1)
-                    tr_element.click()
-                    print("Elemento <tr> clicado com sucesso!")
-
-                    # Espera com múltiplas tentativas para o botão "Ver Fatura"
-                    for tentativa in range(3):
-                        try:
-                            WebDriverWait(driver, 30).until(
-                                EC.presence_of_element_located((By.CLASS_NAME, "modal-outter"))
-                            )
-                            botao_ver_fatura = WebDriverWait(driver, 60).until(
-                                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]"))
-                            )
-                            driver.execute_script("arguments[0].scrollIntoView();", botao_ver_fatura)
-                            time.sleep(1)
-                            botao_ver_fatura.click()
-                            print(f"Fatura de {mes_ano_fatura} baixada com sucesso.")
-                            break
-                        except Exception as e:
-                            print(f"Tentativa {tentativa + 1}/3 falhou ao clicar em 'Ver Fatura': {e}")
-                            time.sleep(5)
-                    else:
-                        print(f"❌ Não foi possível clicar em 'Ver Fatura' para {mes_ano_fatura} após 3 tentativas.")
-                        continue  # Pula para a próxima fatura
-
-                    time.sleep(3)
-
-                    # Fechar modal após baixar a fatura
+                for tentativa in range(3):
                     try:
-                        botao_fechar = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")))
-                        botao_fechar.click()
-                        print("Botão de fechar clicado com sucesso!")
-                    except:
-                        print("Erro ao fechar modal, tentando forçar fechamento...")
-                        driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
+                        WebDriverWait(driver, 30).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, "modal-outter"))
+                        )
+                        botao_ver_fatura = WebDriverWait(driver, 60).until(
+                            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]"))
+                        )
+                        driver.execute_script("arguments[0].scrollIntoView();", botao_ver_fatura)
+                        time.sleep(1)
+                        botao_ver_fatura.click()
+                        print(f"✅ Fatura de {alvo} baixada com sucesso.")
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Tentativa {tentativa + 1}/3 falhou ao clicar em 'Ver Fatura': {e}")
+                        time.sleep(5)
+                else:
+                    print(f"❌ Não foi possível baixar a fatura de {alvo}.")
+                    return
 
-                    contagem += 1
-                    print(f"Contagem atual: {contagem}")
+                # Fecha modal
+                try:
+                    botao_fechar = wait.until(EC.element_to_be_clickable(
+                        (By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")
+                    ))
+                    botao_fechar.click()
+                except:
+                    driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
 
-                except Exception as e:
-                    print(f"Erro ao baixar fatura de {mes_ano_fatura}: {e}")
+                novo_alvo = proximo_mes(alvo)
+                atualizar_alvo_usuario(sessao["id"], novo_alvo)
+                return
+        except Exception as e:
+            print(f"Erro ao verificar fatura: {e}")
 
-        time.sleep(10)
-    except Exception as e:
-        print(f"Erro geral: {e}")
-    finally:
-        print("Processo finalizado.")
+    print(f"🚫 Fatura de {alvo} não disponível no momento.")
 
 
 # Função principal para testar a sessão
@@ -265,7 +251,7 @@ def testar_sessao(cnpj):
         time.sleep(2)
         print("Verifique se a sessão foi restaurada!")
 
-        acessar_faturas(driver)
+        baixar_fatura_alvo(driver, cnpj)
     driver.quit()
 
     return True
