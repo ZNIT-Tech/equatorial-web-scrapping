@@ -209,7 +209,7 @@ def fechar_popups(driver):
 # Função principal para testar a sessão
 def testar_sessao_usina(cnpj):
     options = Options()
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")

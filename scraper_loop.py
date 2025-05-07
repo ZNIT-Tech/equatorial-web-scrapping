@@ -13,7 +13,7 @@ from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 import zipfile
 from dotenv import load_dotenv
-import shutil  # Certifique-se de importar o módulo shutil
+import os
 from supabase import create_client
 
 load_dotenv()
@@ -238,7 +238,7 @@ def acessar_faturas(driver):
 # Função principal para testar a sessão
 def testar_sessao(cnpj):
     options = Options()
-    options.add_argument("--headless")  # Ative o modo headless se necessário
+    options.add_argument("--headless")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
@@ -251,26 +251,22 @@ def testar_sessao(cnpj):
         "download.directory_upgrade": True,
     })
 
-    # Criando um diretório temporário único para os dados do usuário
+    # Criando um diretório temporário para os dados do usuário
     user_data_dir = tempfile.mkdtemp()
     options.add_argument(f"--user-data-dir={user_data_dir}")
 
-    try:
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get(URL_SITE)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
+    driver.get(URL_SITE)
+    time.sleep(2)
+
+    if carregar_dados_sessao(driver, cnpj):
+        driver.refresh()
         time.sleep(2)
+        print("Verifique se a sessão foi restaurada!")
 
-        if carregar_dados_sessao(driver, cnpj):
-            driver.refresh()
-            time.sleep(2)
-            print("Verifique se a sessão foi restaurada!")
-
-            acessar_faturas(driver)
-    finally:
-        driver.quit()
-        # Limpar o diretório temporário após o uso
-        if os.path.exists(user_data_dir):
-            shutil.rmtree(user_data_dir, ignore_errors=True)
+        acessar_faturas(driver)
+    driver.quit()
 
     return True
 
