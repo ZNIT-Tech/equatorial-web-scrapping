@@ -149,26 +149,43 @@ def baixar_fatura_alvo(driver, cnpj):
     if not alvo:
         print(f"⚠️ Usuário {sessao.get('nome')} sem campo 'alvo'.")
         return
-    
+
     driver.get("https://pi.equatorialenergia.com.br/sua-conta/emitir-segunda-via/")
     time.sleep(20)
     driver.refresh()
     wait = WebDriverWait(driver, 30)
 
-    # Aceitar cookies se necessário
+    # Aceita cookies se aparecer
     try:
         consent_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
         consent_button.click()
     except:
         pass
 
-    # Aguarda a tabela carregar
+    # Fecha possível popup modal inicial
+    try:
+        fechar_btn = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.pm__close[aria-label="Fechar"]'))
+        )
+        fechar_btn.click()
+    except:
+        print("ℹ️ Nenhum popup de boas-vindas encontrado.")
+
+    # Aguarda a tabela de faturas aparecer
     try:
         wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
     except TimeoutException:
         print("❌ Tabela de faturas não carregou.")
         return
 
+    try:
+        fechar_btn = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.pm__close[aria-label="Fechar"]'))
+        )
+        fechar_btn.click()
+    except:
+        print("ℹ️ Nenhum popup de boas-vindas encontrado.")
+        
     faturas = driver.find_elements(By.XPATH, "//table//tr[@data-numero-fatura]")
     for fatura in faturas:
         try:
@@ -176,9 +193,10 @@ def baixar_fatura_alvo(driver, cnpj):
             if mes_ano_fatura == alvo:
                 print(f"🔍 Fatura do mês {alvo} encontrada! Baixando...")
 
-                tr_element = wait.until(EC.element_to_be_clickable(
-                    (By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{alvo}']]")
-                ))
+                tr_element = wait.until(EC.element_to_be_clickable((
+                    By.XPATH,
+                    f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{alvo}']]"
+                )))
 
                 driver.execute_script("arguments[0].scrollIntoView();", tr_element)
                 time.sleep(1)
@@ -186,15 +204,15 @@ def baixar_fatura_alvo(driver, cnpj):
 
                 for tentativa in range(3):
                     try:
-                        WebDriverWait(driver, 30).until(
-                            EC.presence_of_element_located((By.CLASS_NAME, "modal-outter"))
-                        )
-                        botao_ver_fatura = WebDriverWait(driver, 60).until(
+                        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "modal-outter")))
+
+                        botao_ver_fatura = wait.until(
                             EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]"))
                         )
                         driver.execute_script("arguments[0].scrollIntoView();", botao_ver_fatura)
                         time.sleep(1)
                         botao_ver_fatura.click()
+
                         print(f"✅ Fatura de {alvo} baixada com sucesso.")
                         break
                     except Exception as e:
@@ -204,18 +222,21 @@ def baixar_fatura_alvo(driver, cnpj):
                     print(f"❌ Não foi possível baixar a fatura de {alvo}.")
                     return
 
-                # Fecha modal
+                # Fecha o modal com ícone X ou via script
                 try:
-                    botao_fechar = wait.until(EC.element_to_be_clickable(
-                        (By.XPATH, "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa fa-times')]")
-                    ))
+                    botao_fechar = wait.until(EC.element_to_be_clickable((
+                        By.XPATH,
+                        "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa') and contains(@class, 'fa-times')]"
+                    )))
                     botao_fechar.click()
                 except:
+                    # Se o clique falhar, tenta esconder o modal manualmente
                     driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
 
                 novo_alvo = proximo_mes(alvo)
                 atualizar_alvo_usuario(sessao["id"], novo_alvo)
                 return
+
         except Exception as e:
             print(f"Erro ao verificar fatura: {e}")
 
