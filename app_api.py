@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, send_file
 from web_scrapper import testar_sessao, zip_pdfs, limpar_diretorio
 from web_scrapper_usina import testar_sessao_usina
 from login import save_Credentials
+from scraper_loop import testar_sessao_loop
 
 # API Flask
 app = Flask(__name__)
@@ -47,6 +48,28 @@ def scrape_usina():
     limpar_diretorio(DOWNLOAD_DIR)
     
     if not testar_sessao_usina(cnpj_cpf):
+        return jsonify({"erro": "Falha ao testar sessão"}), 500
+    
+    caminho_zip = zip_pdfs(DOWNLOAD_DIR)
+
+    if caminho_zip:
+        return send_file(caminho_zip, as_attachment=True, mimetype="application/zip")
+    else:
+        return jsonify({"erro": "Nenhum PDF encontrado para compactar"}), 404
+
+@app.route("/scraper_loop", methods=["POST"])
+def scrape_loop():
+    data = request.json
+    cnpj_cpf = data.get("cnpj_cpf")
+
+    cnpj_cpf = cnpj_cpf.replace(".", "").replace("/", "").replace("-", "")
+
+    if not cnpj_cpf:
+        return jsonify({"erro": "campo obrigatório cnpj_cpf não inserido"}), 400
+    
+    limpar_diretorio(DOWNLOAD_DIR)
+    
+    if not testar_sessao_loop(cnpj_cpf):
         return jsonify({"erro": "Falha ao testar sessão"}), 500
     
     caminho_zip = zip_pdfs(DOWNLOAD_DIR)
