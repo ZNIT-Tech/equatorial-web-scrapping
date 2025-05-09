@@ -155,14 +155,12 @@ def baixar_fatura_alvo(driver, cnpj):
     driver.refresh()
     wait = WebDriverWait(driver, 30)
 
-    # Aceita cookies se aparecer
     try:
         consent_button = wait.until(EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler")))
         consent_button.click()
     except:
         pass
 
-    # Fecha possível popup modal inicial
     try:
         fechar_btn = wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.pm__close[aria-label="Fechar"]'))
@@ -171,7 +169,6 @@ def baixar_fatura_alvo(driver, cnpj):
     except:
         print("ℹ️ Nenhum popup de boas-vindas encontrado.")
 
-    # Aguarda a tabela de faturas aparecer
     try:
         wait.until(EC.presence_of_element_located((By.XPATH, "//table//tr")))
     except TimeoutException:
@@ -193,11 +190,7 @@ def baixar_fatura_alvo(driver, cnpj):
             if mes_ano_fatura == alvo:
                 print(f"🔍 Fatura do mês {alvo} encontrada! Baixando...")
 
-                tr_element = wait.until(EC.element_to_be_clickable((
-                    By.XPATH,
-                    f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{alvo}']]"
-                )))
-
+                tr_element = wait.until(EC.element_to_be_clickable((By.XPATH, f"//tr[.//span[contains(@class, 'referencia_legada') and text()='{alvo}']]")))
                 driver.execute_script("arguments[0].scrollIntoView();", tr_element)
                 time.sleep(1)
                 tr_element.click()
@@ -206,36 +199,34 @@ def baixar_fatura_alvo(driver, cnpj):
                     try:
                         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "modal-outter")))
 
-                        botao_ver_fatura = wait.until(
-                            EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]"))
-                        )
+                        botao_ver_fatura = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Ver Fatura')]")))
                         driver.execute_script("arguments[0].scrollIntoView();", botao_ver_fatura)
                         time.sleep(1)
                         botao_ver_fatura.click()
 
                         print(f"✅ Fatura de {alvo} baixada com sucesso.")
-                        break
+
+                        # Fecha o modal com ícone X ou via script
+                        try:
+                            botao_fechar = wait.until(EC.element_to_be_clickable((
+                                By.XPATH,
+                                "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa') and contains(@class, 'fa-times')]"
+                            )))
+                            botao_fechar.click()
+                        except:
+                            driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
+
+                        # ✅ Atualiza o alvo APENAS após sucesso
+                        novo_alvo = proximo_mes(alvo)
+                        atualizar_alvo_usuario(sessao["id"], novo_alvo)
+
+                        return  # Sai da função após sucesso
                     except Exception as e:
                         print(f"⚠️ Tentativa {tentativa + 1}/3 falhou ao clicar em 'Ver Fatura': {e}")
                         time.sleep(5)
-                else:
-                    print(f"❌ Não foi possível baixar a fatura de {alvo}.")
-                    return
 
-                # Fecha o modal com ícone X ou via script
-                try:
-                    botao_fechar = wait.until(EC.element_to_be_clickable((
-                        By.XPATH,
-                        "//div[contains(@class, 'modal-close')]/i[contains(@class, 'fa') and contains(@class, 'fa-times')]"
-                    )))
-                    botao_fechar.click()
-                except:
-                    # Se o clique falhar, tenta esconder o modal manualmente
-                    driver.execute_script("document.querySelector('.modal-outter').style.display = 'none';")
-
-                novo_alvo = proximo_mes(alvo)
-                atualizar_alvo_usuario(sessao["id"], novo_alvo)
-                return
+                print(f"❌ Não foi possível baixar a fatura de {alvo}.")
+                return  # Garante que não avança o alvo em caso de falha
 
         except Exception as e:
             print(f"Erro ao verificar fatura: {e}")
