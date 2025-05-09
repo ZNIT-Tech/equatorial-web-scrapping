@@ -12,10 +12,34 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 import zipfile
+from dotenv import load_dotenv
+import os
+from supabase import create_client
+
+load_dotenv()
+
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+supabase = create_client(url, key)
 
 COOKIES_DIR = "cookies"
 URL_SITE = "https://pi.equatorialenergia.com.br/sua-conta/"
 meses_aceitos = []  # Será gerado com a função abaixo
+
+def parse_cookie_string(cookie_string):
+    cookies = []
+    for pair in cookie_string.split('; '):
+        if '=' in pair:
+            name, value = pair.split('=', 1)
+            cookies.append({
+                "name": name,
+                "value": value,
+                "domain": "pi.equatorialenergia.com.br",
+                "path": "/",
+                "secure": False,
+                "httpOnly": False
+            })
+    return cookies
 
 # Função para gerar os últimos 5 meses aceitos
 def gerar_ultimos_5_meses():
@@ -53,43 +77,53 @@ print("Últimos 5 meses aceitos:", meses_aceitos)
 # Definindo o diretório para downloads, usando variável de ambiente ou padrão
 DOWNLOAD_DIR = os.environ.get('DOWNLOAD_DIR', '/app/download')
 
+def buscar_sessao_por_cpf(cpf):
+    response = supabase.table("credenciais_clientes").select("*").eq("cnpj_cpf", cpf).order("id", desc=True).limit(1).execute()
+    if response.data:
+        return response.data[0]
+    return None
+
 # Função para carregar dados da sessão
 def carregar_dados_sessao(driver, cnpj):
-    cookie_path = os.path.join(COOKIES_DIR, f"{cnpj}_cookies.json")
-    local_storage_path = os.path.join(COOKIES_DIR, f"{cnpj}_localStorage.json")
-    session_storage_path = os.path.join(COOKIES_DIR, f"{cnpj}_sessionStorage.json")
-
-    if not os.path.exists(cookie_path):
-        print(f"Nenhum dado de sessão encontrado para o CNPJ {cnpj}.")
+    
+    sessao = buscar_sessao_por_cpf(cnpj)  # ou buscar_sessao_por_cnpj
+    if not sessao:
+        print("⚠️ Nenhuma sessão encontrada no Supabase.")
         return False
 
-    with open(cookie_path, "r") as file:
-        cookies_playwright = json.load(file)
+    # Interações iniciais
+    driver.get("https://pi.equatorialenergia.com.br/")
+    time.sleep(2)
+    
+    try:
+        cookies_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
+        )
+        cookies_button.click()
+    except: pass
 
-    cookies_selenium = ajustar_cookies_playwright_para_selenium(cookies_playwright)
-
-    for cookie in cookies_selenium:
+    # Aplicando cookies
+    cookies_raw = sessao.get("cookies", "")
+    cookies_list = parse_cookie_string(cookies_raw)
+    for cookie in cookies_list:
         try:
             driver.add_cookie(cookie)
         except Exception as e:
-            print(f"Erro ao adicionar cookie {cookie['name']}: {e}")
+            print(f"Erro ao aplicar cookie {cookie}: {e}")
 
-    print("Cookies carregados com sucesso!")
+    # LocalStorage
+    if sessao.get("local_storage"):
+        for key, value in sessao["local_storage"].items():
+            driver.execute_script(f"localStorage.setItem('{key}', `{value}`);")
 
-    if os.path.exists(local_storage_path):
-        with open(local_storage_path, "r") as file:
-            local_storage_data = json.load(file)
-        for key, value in local_storage_data.items():
-            driver.execute_script(f"localStorage.setItem({json.dumps(key)}, {json.dumps(value)});")
+    # SessionStorage
+    if sessao.get("session_storage"):
+        for key, value in sessao["session_storage"].items():
+            driver.execute_script(f"sessionStorage.setItem('{key}', `{value}`);")
 
-    if os.path.exists(session_storage_path):
-        with open(session_storage_path, "r") as file:
-            session_storage_data = json.load(file)
-        for key, value in session_storage_data.items():
-            driver.execute_script(f"sessionStorage.setItem({json.dumps(key)}, {json.dumps(value)});")
-
-    print("Local Storage e Session Storage carregados!")
-
+    driver.get("https://pi.equatorialenergia.com.br/")
+    time.sleep(3)
+    print("✅ Sessão restaurada do Supabase.")
     return True
 
 # Função para acessar a página de faturas e fazer o download
